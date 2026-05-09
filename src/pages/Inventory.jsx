@@ -3,6 +3,7 @@ import { Package, Plus, Minus, Search, Edit2, Trash2 } from 'lucide-react';
 import AppNavbar from '../components/AppNavbar';
 import AddStockModal from '../components/AddStockModal';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 // --- STATUS BADGE ---
 function StatusBadge({ isLow, t }) {
@@ -19,7 +20,7 @@ function StatusBadge({ isLow, t }) {
 
 function Inventory({ toggleTheme, isDark }) {
   const { t } = usePreferences();
-  const apiBaseUrl = 'http://localhost:8080/api/items';
+  const apiBaseUrl = '/api/items';
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -48,7 +49,7 @@ function Inventory({ toggleTheme, isDark }) {
   const fetchItems = async () => {
     setIsLoading(true);
     setError('');
-    const res = await fetch(apiBaseUrl);
+    const res = await apiFetch(apiBaseUrl);
     if (!res.ok) {
       throw new Error(t('inventory.loading'));
     }
@@ -87,7 +88,7 @@ function Inventory({ toggleTheme, isDark }) {
       return;
     }
     setError('');
-    const res = await fetch(`${apiBaseUrl}/${id}`, { method: 'DELETE' });
+    const res = await apiFetch(`${apiBaseUrl}/${id}`, { method: 'DELETE' });
     if (!res.ok) {
       setError(t('inventory.deleteError'));
       return;
@@ -107,9 +108,8 @@ function Inventory({ toggleTheme, isDark }) {
     const url = isEdit ? `${apiBaseUrl}/${itemData.id}` : apiBaseUrl;
     const method = isEdit ? 'PUT' : 'POST';
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -125,9 +125,8 @@ function Inventory({ toggleTheme, isDark }) {
   const updateQuantity = async (item, nextQuantity) => {
     setError('');
     const payload = buildRequest({ ...item, quantity: nextQuantity });
-    const res = await fetch(`${apiBaseUrl}/${item.id}`, {
+    const res = await apiFetch(`${apiBaseUrl}/${item.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -139,16 +138,26 @@ function Inventory({ toggleTheme, isDark }) {
     fetchItems().catch((err) => setError(err.message));
   };
 
-  const handleAddQty = (id) => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-    updateQuantity(item, item.quantity + 1);
+  const handleAddQty = async (id) => {
+    setError('');
+    const res = await apiFetch(`${apiBaseUrl}/${id}/add-stock`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity: 1 }),
+    });
+    if (!res.ok) { setError(t('inventory.updateError')); return; }
+    fetchItems().catch((err) => setError(err.message));
   };
 
-  const handleRemoveQty = (id) => {
+  const handleRemoveQty = async (id) => {
     const item = items.find((i) => i.id === id);
     if (!item || item.quantity <= 0) return;
-    updateQuantity(item, item.quantity - 1);
+    setError('');
+    const res = await apiFetch(`${apiBaseUrl}/${id}/remove-stock`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity: 1 }),
+    });
+    if (!res.ok) { setError(t('inventory.updateError')); return; }
+    fetchItems().catch((err) => setError(err.message));
   };
 
   const filteredItems = items.filter((i) => {

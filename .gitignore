@@ -26,6 +26,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# 6. Claude Code internal memory (not project code)
+.claude/
+
 # 5. Fichiers systèmes ou générés par les éditeurs de code (VSCode, Mac, etc.)
 .vscode/*
 !.vscode/extensions.json

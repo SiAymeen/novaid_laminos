@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 const TYPE_STYLES = {
   Alimentaire: { bg: 'need-pill need-pill-food', emoji: '🍎' },
@@ -73,7 +74,7 @@ function MyMissions({ toggleTheme, isDark }) {
     setIsLoading(true);
     setError('');
 
-    fetch('http://localhost:8080/api/visits')
+    apiFetch('/api/visits')
       .then((res) => {
         if (!res.ok) {
           throw new Error(t('missions.loading'));

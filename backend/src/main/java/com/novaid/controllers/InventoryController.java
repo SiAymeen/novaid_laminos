@@ -1,91 +1,59 @@
 package com.novaid.controllers;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
-import jakarta.validation.Valid;
-
 import com.novaid.dto.ItemRequest;
 import com.novaid.dto.ItemResponse;
-import com.novaid.models.Item;
-import com.novaid.repositories.InventoryRepository;
+import com.novaid.dto.StockAdjustRequest;
+import com.novaid.services.InventoryService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/items")
 public class InventoryController {
-    private final InventoryRepository inventoryRepository;
 
-    public InventoryController(InventoryRepository inventoryRepository) {
-        this.inventoryRepository = inventoryRepository;
+    private final InventoryService inventoryService;
+
+    public InventoryController(InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
     }
 
     @GetMapping
     public List<ItemResponse> getAllItems() {
-        return inventoryRepository.findAll().stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+        return inventoryService.getAll();
     }
 
     @GetMapping("/{id}")
     public ItemResponse getItem(@PathVariable Long id) {
-        Item item = inventoryRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
-        return toResponse(item);
+        return inventoryService.getById(id);
     }
 
     @PostMapping
     public ResponseEntity<ItemResponse> createItem(@Valid @RequestBody ItemRequest request) {
-        Item item = new Item();
-        applyRequest(item, request);
-        Item saved = inventoryRepository.save(item);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.create(request));
     }
 
     @PutMapping("/{id}")
     public ItemResponse updateItem(@PathVariable Long id, @Valid @RequestBody ItemRequest request) {
-        Item item = inventoryRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
-        applyRequest(item, request);
-        Item saved = inventoryRepository.save(item);
-        return toResponse(saved);
+        return inventoryService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
-        Item item = inventoryRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found"));
-        inventoryRepository.delete(item);
+        inventoryService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    private ItemResponse toResponse(Item item) {
-        ItemResponse response = new ItemResponse();
-        response.setId(item.getId());
-        response.setName(item.getName());
-        response.setCategory(item.getCategory());
-        response.setQuantity(item.getQuantity());
-        response.setUnit(item.getUnit());
-        response.setMinThreshold(item.getMinThreshold());
-        return response;
+    @PutMapping("/{id}/add-stock")
+    public ItemResponse addStock(@PathVariable Long id, @Valid @RequestBody StockAdjustRequest request) {
+        return inventoryService.addStock(id, request.getQuantity());
     }
 
-    private void applyRequest(Item item, ItemRequest request) {
-        item.setName(request.getName());
-        item.setCategory(request.getCategory());
-        item.setQuantity(request.getQuantity());
-        item.setUnit(request.getUnit());
-        item.setMinThreshold(request.getMinThreshold());
+    @PutMapping("/{id}/remove-stock")
+    public ItemResponse removeStock(@PathVariable Long id, @Valid @RequestBody StockAdjustRequest request) {
+        return inventoryService.removeStock(id, request.getQuantity());
     }
 }

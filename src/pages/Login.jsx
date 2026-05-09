@@ -9,14 +9,31 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const [error, setError] = useState('');
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate login
-    setTimeout(() => {
-      setLoading(false);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        setError('Email ou mot de passe incorrect.');
+        return;
+      }
+      const data = await res.json();
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify({ id: data.id, fullName: data.fullName, email: data.email, role: data.role }));
       navigate('/dashboard');
-    }, 1200);
+    } catch {
+      setError('Impossible de contacter le serveur.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -136,8 +153,14 @@ export default function Login() {
               </label>
             </div>
 
-            <button 
-              type="submit" 
+            {error && (
+              <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-4 py-2">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
               disabled={loading}
               className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm shadow-blue-600/30 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed items-center gap-2"
             >

@@ -5,11 +5,7 @@ DELETE FROM families;
 DELETE FROM items;
 DELETE FROM users;
 SET FOREIGN_KEY_CHECKS=1;
-
-INSERT INTO users (id, full_name, email, password, role, phone, enabled, created_at, updated_at) VALUES
-  (1, 'Admin Novaid', 'admin@novaid.tn', 'admin', 'ADMIN', '20000000', 1, NOW(), NOW()),
-  (2, 'Aymen Dridi', 'aymen@novaid.tn', 'agent', 'AGENT', '21111111', 1, NOW(), NOW()),
-  (3, 'Yosser Kallel', 'yosser@novaid.tn', 'coord', 'COORDINATOR', '22222222', 1, NOW(), NOW());
+-- Users and visits are seeded by DataInitializer with BCrypt-hashed passwords.
 
 INSERT INTO families (id, head_name, address, urgency_index, latitude, longitude, active, created_at, updated_at) VALUES
   (1, 'Famille Ben Salah', 'Sousse, Khzema', 4, 35.8256, 10.6084, 1, NOW(), NOW()),
@@ -31,7 +27,3 @@ INSERT INTO items (id, name, category, quantity, unit, min_threshold, created_at
   (4, 'Cahiers scolaires', 'Scolaire', 120, 'pieces', 50, NOW(), NOW()),
   (5, 'Pates', 'Alimentaire', 25, 'kg', 30, NOW(), NOW());
 
-INSERT INTO visits (id, family_id, volunteer_id, visit_date, status, notes, created_at) VALUES
-  (1, 1, 2, NOW() - INTERVAL 1 DAY, 'COMPLETED', 'Visite de suivi', NOW()),
-  (2, 2, 2, NOW() - INTERVAL 2 DAY, 'COMPLETED', 'Visite urgente', NOW()),
-  (3, 3, 2, NOW() - INTERVAL 4 DAY, 'PLANNED', 'Visite planifiee', NOW());

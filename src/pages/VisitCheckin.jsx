@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 const ALLOWED_RADIUS_METERS = 500;
 
@@ -14,48 +15,7 @@ const STEP = {
   ERROR: 'error',
 };
 
-// User's location (lives in Tunis)
 const USER_LOCATION = { lat: 36.8065, lng: 10.1815 };
-
-// Mission locations database with real Tunisian coordinates
-const MISSIONS_DB = {
-  '1': {
-    id: '1',
-    family: 'Famille Ben Salah',
-    address: 'Sousse, Khzema',
-    lat: 35.8245,
-    lng: 10.6369,
-    nearbyPlaces: [
-      { name: 'Centre Ville de Sousse', lat: 35.8265, lng: 10.6383 },
-      { name: 'Médina de Sousse', lat: 35.8300, lng: 10.6400 },
-      { name: 'Ribat de Sousse', lat: 35.8280, lng: 10.6360 }
-    ]
-  },
-  '2': {
-    id: '2',
-    family: 'Famille Ayadi',
-    address: 'Sfax, Menzel Chaker',
-    lat: 34.7406,
-    lng: 10.7603,
-    nearbyPlaces: [
-      { name: 'Centre Ville de Sfax', lat: 34.7405, lng: 10.7606 },
-      { name: 'Médina de Sfax', lat: 34.7389, lng: 10.7644 },
-      { name: 'Port de Sfax', lat: 34.7144, lng: 10.7744 }
-    ]
-  },
-  '3': {
-    id: '3',
-    family: 'Famille Belghith',
-    address: 'Tunis, Mrezga',
-    lat: 36.8065,
-    lng: 10.1815,
-    nearbyPlaces: [
-      { name: 'Médina de Tunis', lat: 36.7970, lng: 10.1685 },
-      { name: 'Souks de Tunis', lat: 36.7975, lng: 10.1650 },
-      { name: 'Centre Ville Tunis', lat: 36.8100, lng: 10.1900 }
-    ]
-  }
-};
 
 // Calculate distance between two GPS coordinates in meters
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -83,17 +43,25 @@ function VisitCheckin({ toggleTheme, isDark }) {
   const [missionData, setMissionData] = useState(null);
 
   useEffect(() => {
-    // 1. Load mission data
-    const mission = MISSIONS_DB[id];
-    if (mission) {
-      setMissionData(mission);
-      const timer = setTimeout(() => {
+    apiFetch(`/api/visits/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(t('visitCheckin.notFound'));
+        return res.json();
+      })
+      .then((visit) => {
+        setMissionData({
+          id: visit.id,
+          family: visit.familyName || 'Famille',
+          address: visit.familyAddress || '',
+          lat: visit.familyLatitude,
+          lng: visit.familyLongitude,
+        });
         setStep(STEP.GETTING_POSITION);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setError(t('visitCheckin.notFound'));
-    }
+      })
+      .catch(() => {
+        setError(t('visitCheckin.notFound'));
+        setStep(STEP.ERROR);
+      });
   }, [id]);
 
   useEffect(() => {
@@ -140,12 +108,19 @@ function VisitCheckin({ toggleTheme, isDark }) {
     }
   };
 
-  const handleValidate = () => {
+  const handleValidate = async () => {
     setStep(STEP.SUBMITTING);
-    setTimeout(() => {
+    const res = await apiFetch(`/api/visits/${id}/checkin`, {
+      method: 'POST',
+      body: JSON.stringify({ latitude: position.lat, longitude: position.lng }),
+    });
+    if (res && res.ok) {
       setStep(STEP.SUCCESS);
       setTimeout(() => navigate('/missions', { replace: true }), 2000);
-    }, 1500);
+    } else {
+      setStep(STEP.POSITION_FOUND);
+      setError(t('visitCheckin.tooFar'));
+    }
   };
 
   const distance = distanceMeters;
@@ -266,6 +241,15 @@ function VisitCheckin({ toggleTheme, isDark }) {
             <div className="text-center py-8 animate-fade-in">
               <div className="animate-spin inline-block w-10 h-10 border-[4px] border-current border-t-transparent text-blue-600 rounded-full" role="status"></div>
               <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-300">{t('visitCheckin.saving')}</p>
+            </div>
+          )}
+
+          {step === STEP.ERROR && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">❌</span>
+              </div>
+              <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
 
