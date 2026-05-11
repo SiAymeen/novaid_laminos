@@ -3,12 +3,15 @@ package com.novaid.controllers;
 import com.novaid.dto.CheckInRequest;
 import com.novaid.dto.VisitRequest;
 import com.novaid.dto.VisitResponse;
+import com.novaid.services.FileStorageService;
 import com.novaid.services.VisitService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -16,9 +19,11 @@ import java.util.List;
 public class VisitController {
 
     private final VisitService visitService;
+    private final FileStorageService fileStorageService;
 
-    public VisitController(VisitService visitService) {
+    public VisitController(VisitService visitService, FileStorageService fileStorageService) {
         this.visitService = visitService;
+        this.fileStorageService = fileStorageService;
     }
 
     @GetMapping
@@ -57,9 +62,18 @@ public class VisitController {
         return ResponseEntity.noContent().build();
     }
 
-    // Agent sends their GPS coordinates — validated against family location (500m radius)
     @PostMapping("/{id}/checkin")
     public VisitResponse checkIn(@PathVariable Long id, @Valid @RequestBody CheckInRequest request) {
         return visitService.checkInLocation(id, request.getLatitude(), request.getLongitude());
+    }
+
+    @PostMapping("/{id}/proof-photo")
+    public ResponseEntity<String> uploadProofPhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        String filePath = fileStorageService.saveProofPhoto(file);
+        visitService.attachProofPhoto(id, filePath);
+        return ResponseEntity.ok(filePath);
     }
 }

@@ -40,6 +40,7 @@ function VisitCheckin({ toggleTheme, isDark }) {
   const [position, setPosition] = useState(null);
   const [distanceMeters, setDistanceMeters] = useState(null);
   const [proofPhoto, setProofPhoto] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
   const [missionData, setMissionData] = useState(null);
 
   useEffect(() => {
@@ -101,27 +102,39 @@ function VisitCheckin({ toggleTheme, isDark }) {
   }, [step, missionData]);
 
   const handleProofPhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Mock photo display
-      setProofPhoto(URL.createObjectURL(file));
-    }
-  };
+  const file = e.target.files?.[0];
+  if (file) {
+    setSelectedFile(file);
+    setProofPhoto(URL.createObjectURL(file));
+  }
+};
 
-  const handleValidate = async () => {
-    setStep(STEP.SUBMITTING);
-    const res = await apiFetch(`/api/visits/${id}/checkin`, {
-      method: 'POST',
-      body: JSON.stringify({ latitude: position.lat, longitude: position.lng }),
-    });
-    if (res && res.ok) {
-      setStep(STEP.SUCCESS);
-      setTimeout(() => navigate('/missions', { replace: true }), 2000);
-    } else {
-      setStep(STEP.POSITION_FOUND);
-      setError(t('visitCheckin.tooFar'));
+ const handleValidate = async () => {
+  setStep(STEP.SUBMITTING);
+
+  const res = await apiFetch(`/api/visits/${id}/checkin`, {
+    method: 'POST',
+    body: JSON.stringify({ latitude: position.lat, longitude: position.lng }),
+  });
+
+  if (res && res.ok) {
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      await fetch(`/api/visits/${id}/proof-photo`, {
+        method: 'POST',
+        body: formData,
+      });
     }
-  };
+
+    setStep(STEP.SUCCESS);
+    setTimeout(() => navigate('/missions', { replace: true }), 2000);
+  } else {
+    setStep(STEP.POSITION_FOUND);
+    setError(t('visitCheckin.tooFar'));
+  }
+};
 
   const distance = distanceMeters;
   const withinRadius = distance != null && distance <= ALLOWED_RADIUS_METERS;

@@ -96,7 +96,13 @@ public class VisitService {
         visit.setStatus(VisitStatus.COMPLETED);
         return toResponse(visitRepository.save(visit));
     }
-
+             
+    public void attachProofPhoto(Long visitId, String filePath) {
+    Visit visit = findVisit(visitId);
+    visit.setProofPhotoPath(filePath);
+    visitRepository.save(visit);
+}
+   	
     private Visit findVisit(Long id) {
         return visitRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Visit not found"));

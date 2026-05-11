@@ -21,17 +21,17 @@ cd backend
 # or on Windows:
 C:\Users\az\maven\apache-maven-3.9.6\bin\mvn spring-boot:run
 ```
-Runs on **http://localhost:8080**
+Runs on **http://localhost:8081**
 
 ### Start the frontend
 ```bash
 npm install
 npm run dev
 ```
-Runs on **http://localhost:5173** — all `/api` calls are proxied to port 8080.
+Runs on **http://localhost:5173** — all `/api` calls are proxied to port 8081.
 
 ### Swagger UI
-`http://localhost:8080/swagger-ui/index.html`
+`http://localhost:8081/swagger-ui/index.html`
 Click **Authorize** → paste `Bearer <token>` to test protected endpoints.
 
 ---
@@ -215,7 +215,7 @@ GPS coordinates are stored in a `GpsCoordinates` embedded object (`latitude`, `l
 The React frontend (`src/`) communicates with the backend through:
 
 - **`src/utils/api.js`** — `apiFetch()` helper that automatically injects the JWT token from `localStorage` into every request and redirects to `/login` on 401/403
-- **Vite proxy** (`vite.config.js`) — all `/api` calls are proxied to `http://localhost:8080`, so no CORS issues and no hardcoded URLs in the frontend
+- **Vite proxy** (`vite.config.js`) — all `/api` calls are proxied to `http://localhost:8081`, so no CORS issues and no hardcoded URLs in the frontend
 
 Pages already connected to the real backend:
 - `Login.jsx` — calls `/api/auth/login`, stores token + user in localStorage

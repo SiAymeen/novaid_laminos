@@ -19,7 +19,7 @@ function StatusBadge({ status, t }) {
 
 function FamilyManagement({ toggleTheme, isDark }) {
   const { t } = usePreferences();
-  const apiBaseUrl = 'http://localhost:8080/api/families';
+  const apiBaseUrl = '/api/families';
   const [families, setFamilies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,15 +124,17 @@ function FamilyManagement({ toggleTheme, isDark }) {
 
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+  'Content-Type': 'application/json',
+},
       body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
-      setError(t('families.saveError'));
-      return;
-    }
-
+  const text = await res.text();
+  setError(`${t('families.saveError')} - ${res.status} - ${text}`);
+  return;
+}
     setIsModalOpen(false);
     fetchFamilies().catch((err) => setError(err.message));
   };

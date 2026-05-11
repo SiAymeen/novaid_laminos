@@ -141,6 +141,22 @@ function AddFamilyModal({ isOpen, onClose, onSave, initialData }) {
   const removeClothingRow = (index) => {
     setClothing((prev) => prev.filter((_, i) => i !== index));
   };
+const generateFamilyStory = () => {
+  const selectedNeeds = needs.length > 0 ? needs.join(', ') : 'aucun besoin spécifique';
+  const familyName = name.trim() || 'cette famille';
+  const familyAddress = address.trim() || 'une adresse non précisée';
+  const familyPhone = phone.trim() || 'non renseigné';
+  const members = Math.max(1, Number(membersCount) || 1);
+
+  const story = `La famille ${familyName}, située à ${familyAddress}, est composée de ${members} membre(s). 
+Elle est suivie par la plateforme NOVAID afin d’assurer un meilleur accompagnement social et humanitaire. 
+Les besoins identifiés sont : ${selectedNeeds}. 
+Le contact téléphonique renseigné est : ${familyPhone}. 
+Le statut actuel de la famille est : ${status}. 
+Cette description a été générée automatiquement afin d’aider les équipes à mieux comprendre le contexte de la famille et à prioriser les actions nécessaires.`;
+
+  setFamilyHistory(story);
+};
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -183,7 +199,6 @@ function AddFamilyModal({ isOpen, onClose, onSave, initialData }) {
     };
     
     onSave?.(payload);
-    onClose?.();
   };
 
   if (!isOpen) return null;
@@ -283,17 +298,28 @@ function AddFamilyModal({ isOpen, onClose, onSave, initialData }) {
             />
           </div>
           <div>
-            <label htmlFor="familyHistory" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              {t('modal.family.history')}
-            </label>
-            <textarea
-              id="familyHistory"
-              value={familyHistory}
-              onChange={(e) => setFamilyHistory(e.target.value)}
-              rows={3}
-              className="w-full min-h-[88px] px-3 py-3 border border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus-visible:ring-2 focus-visible:ring-blue-600 resize-none"
-            />
-          </div>
+  <div className="flex items-center justify-between mb-2">
+    <label htmlFor="familyHistory" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+      {t('modal.family.history')}
+    </label>
+
+    <button
+      type="button"
+      onClick={generateFamilyStory}
+      className="px-3 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/60"
+    >
+      Générer l’histoire
+    </button>
+  </div>
+
+  <textarea
+    id="familyHistory"
+    value={familyHistory}
+    onChange={(e) => setFamilyHistory(e.target.value)}
+    rows={5}
+    className="w-full min-h-[120px] px-3 py-3 border border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus-visible:ring-2 focus-visible:ring-blue-600 resize-none"
+  />
+</div>
           <div role="group" aria-labelledby="family-gps-label">
             <span id="family-gps-label" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t('modal.family.gps')}

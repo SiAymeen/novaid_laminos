@@ -143,7 +143,7 @@ function Dashboard({ toggleTheme, isDark }) {
     setIsLoading(true);
     setError('');
 
-    fetch('http://localhost:8080/api/dashboard/summary')
+    fetch('http://localhost:8081/api/dashboard/summary')
       .then((res) => {
         if (!res.ok) {
           throw new Error(t('dashboard.loadError'));

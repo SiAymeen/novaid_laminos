@@ -43,7 +43,7 @@ function RoleBadge({ role }) {
 
 function Users({ toggleTheme, isDark }) {
   const { t } = usePreferences();
-  const apiBaseUrl = 'http://localhost:8080/api/users';
+  const apiBaseUrl = 'http://localhost:8081/api/users';
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
