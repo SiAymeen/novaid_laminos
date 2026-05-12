@@ -7,16 +7,21 @@ function AppNavbar({ activeRoute = 'dashboard', toggleTheme, isDark }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { t } = usePreferences();
 
-  const NAV_ITEMS = [
-    { key: 'dashboard', to: '/dashboard', label: t('nav.dashboard'), icon: null },
-    { key: 'families', to: '/families', label: t('nav.families'), icon: Users },
-    { key: 'alerts', to: '/alerts', label: t('nav.alerts'), icon: Bell },
-    { key: 'map', to: '/map', label: t('nav.map'), icon: Globe },
-    { key: 'inventory', to: '/inventory', label: t('nav.inventory'), icon: Package },
-    { key: 'users', to: '/users', label: t('nav.users'), icon: Users },
-    { key: 'missions', to: '/missions', label: t('nav.missions'), icon: Target },
-    { key: 'settings', to: '/settings', label: t('nav.settings'), icon: Settings },
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const role = currentUser.role;
+
+  const ALL_NAV_ITEMS = [
+    { key: 'dashboard', to: '/dashboard', label: t('nav.dashboard'), icon: null, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR', 'ROLE_AGENT'] },
+    { key: 'families', to: '/families', label: t('nav.families'), icon: Users, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR', 'ROLE_AGENT'] },
+    { key: 'alerts', to: '/alerts', label: t('nav.alerts'), icon: Bell, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR'] },
+    { key: 'map', to: '/map', label: t('nav.map'), icon: Globe, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR', 'ROLE_AGENT'] },
+    { key: 'inventory', to: '/inventory', label: t('nav.inventory'), icon: Package, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR'] },
+    { key: 'users', to: '/users', label: t('nav.users'), icon: Users, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR'] },
+    { key: 'missions', to: '/missions', label: t('nav.missions'), icon: Target, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR', 'ROLE_AGENT'] },
+    { key: 'settings', to: '/settings', label: t('nav.settings'), icon: Settings, roles: ['ROLE_ADMIN', 'ROLE_COORDINATOR', 'ROLE_AGENT'] },
   ];
+
+  const NAV_ITEMS = ALL_NAV_ITEMS.filter(item => item.roles.includes(role));
 
   return (
     <>

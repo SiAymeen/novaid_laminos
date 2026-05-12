@@ -145,6 +145,7 @@ function Users({ toggleTheme, isDark }) {
   };
 
   const filteredUsers = users.filter((u) => {
+    if (currentUser.role === 'ROLE_COORDINATOR' && u.role === 'ADMIN') return false;
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
     const name = (u.name || '').toLowerCase();
