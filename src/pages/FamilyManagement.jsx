@@ -4,6 +4,7 @@ import { Search, Edit2, Trash2 } from 'lucide-react';
 import AddFamilyModal from '../components/AddFamilyModal';
 import AppNavbar from '../components/AppNavbar';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 // --- STATUS BADGE WITH NEW DESIGN ---
 function StatusBadge({ status, t }) {
@@ -62,8 +63,8 @@ function FamilyManagement({ toggleTheme, isDark }) {
   const fetchFamilies = async () => {
     setIsLoading(true);
     setError('');
-    const res = await fetch(apiBaseUrl);
-    if (!res.ok) {
+    const res = await apiFetch(apiBaseUrl);
+    if (!res || !res.ok) {
       throw new Error(t('families.saveError'));
     }
     const data = await res.json();
@@ -101,8 +102,8 @@ function FamilyManagement({ toggleTheme, isDark }) {
       return;
     }
     setError('');
-    const res = await fetch(`${apiBaseUrl}/${familyId}`, { method: 'DELETE' });
-    if (!res.ok) {
+    const res = await apiFetch(`${apiBaseUrl}/${familyId}`, { method: 'DELETE' });
+    if (!res || !res.ok) {
       setError(t('families.deleteError'));
       return;
     }
@@ -122,11 +123,8 @@ function FamilyManagement({ toggleTheme, isDark }) {
     const url = isEdit ? `${apiBaseUrl}/${rawId}` : apiBaseUrl;
     const method = isEdit ? 'PUT' : 'POST';
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: {
-  'Content-Type': 'application/json',
-},
       body: JSON.stringify(payload),
     });
 

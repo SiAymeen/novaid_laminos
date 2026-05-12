@@ -122,8 +122,10 @@ function VisitCheckin({ toggleTheme, isDark }) {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
+      const token = localStorage.getItem('token');
       await fetch(`/api/visits/${id}/proof-photo`, {
         method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
     }
