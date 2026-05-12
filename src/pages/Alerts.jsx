@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Clock, Package, MessageSquare, ChevronRight } from 'lucide-react';
 import AppNavbar from '../components/AppNavbar';
 import AddVisitModal from '../components/AddVisitModal';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 function formatDate(dateStr, locale, t) {
   if (!dateStr) return t('common.neverVisited');
@@ -19,27 +20,46 @@ function formatDate(dateStr, locale, t) {
 
 function Alerts({ toggleTheme, isDark }) {
   const { t, locale } = usePreferences();
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const canPlan = currentUser.role === 'ROLE_ADMIN' || currentUser.role === 'ROLE_COORDINATOR';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFamily, setSelectedFamily] = useState(null);
 
-  const urgentFamilies = [
+  const urgentFamiliesMock = [
     { _id: '1', name: 'Famille Mansouri', address: 'Quartier Nord, Bizerte', needs: ['Lait infantile', 'Médicaments'], alertType: 'urgent' }
   ];
-  
-  const forgottenFamilies = [
-    { _id: '2', name: 'Famille Trabelsi', address: 'Centre-ville', lastVisitDate: '2023-11-05T10:00:00Z', alertType: 'forgotten' },
-    { _id: '3', name: 'Famille Ben Ali', address: 'Banlieue Sud', lastVisitDate: null, alertType: 'forgotten' }
-  ];
 
-  const lowStockItems = [
-    { _id: '101', name: 'Lait 1er âge', quantity: 2, minThreshold: 10, unit: 'boîtes' },
-    { _id: '102', name: 'Couvertures d\'hiver', quantity: 0, minThreshold: 5, unit: 'unités' }
-  ];
+  const [urgentFamilies, setUrgentFamilies] = useState([]);
+  const [forgottenFamilies, setForgottenFamilies] = useState([]);
+  const [lowStockItems, setLowStockItems] = useState([]);
+  const [recentReports, setRecentReports] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const recentReports = [
-    { _id: '201', familyName: 'Famille Jendoubi', volunteerName: 'Ahmed B.', date: new Date().toISOString(), notes: 'La famille a besoin de fournitures scolaires pour la rentrée prochaine.' },
-    { _id: '202', familyName: 'Famille Gharbi', volunteerName: 'Sarra M.', date: new Date(Date.now() - 86400000).toISOString(), notes: 'Visite effectuée, colis alimentaire remis. Tout va bien.' }
-  ];
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+
+    apiFetch('/api/alerts')
+      .then(res => {
+        if (!res) return null;
+        if (!res.ok) throw new Error('Failed to fetch alerts');
+        return res.json();
+      })
+      .then(data => {
+        if (isMounted && data) {
+          setUrgentFamilies(data.urgentFamilies || []);
+          setForgottenFamilies(data.forgottenFamilies || []);
+          setLowStockItems(data.lowStockItems || []);
+          setRecentReports(data.recentReports || []);
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  }, []);
 
   const mergedFamilies = [...urgentFamilies, ...forgottenFamilies];
 
@@ -112,12 +132,14 @@ function Alerts({ toggleTheme, isDark }) {
                           >
                             {t('alerts.folder')}
                           </Link>
-                          <button
-                            onClick={() => handlePlanVisit(f)}
-                            className="btn btn-primary"
-                          >
-                            {t('alerts.plan')}
-                          </button>
+                          {canPlan && (
+                            <button
+                              onClick={() => handlePlanVisit(f)}
+                              className="btn btn-primary"
+                            >
+                              {t('alerts.plan')}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -150,12 +172,14 @@ function Alerts({ toggleTheme, isDark }) {
                           >
                             {t('alerts.folder')}
                           </Link>
-                          <button
-                            onClick={() => handlePlanVisit(f)}
-                            className="btn btn-primary"
-                          >
-                            {t('alerts.plan')}
-                          </button>
+                          {canPlan && (
+                            <button
+                              onClick={() => handlePlanVisit(f)}
+                              className="btn btn-primary"
+                            >
+                              {t('alerts.plan')}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -249,7 +273,6 @@ function Alerts({ toggleTheme, isDark }) {
         onClose={() => setIsModalOpen(false)}
         selectedFamily={selectedFamily}
         onSuccess={() => {
-          alert(t('alerts.reportSaved'));
           setIsModalOpen(false);
           setSelectedFamily(null);
         }}

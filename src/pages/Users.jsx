@@ -3,6 +3,7 @@ import { Search, Edit2, Trash2 } from 'lucide-react';
 import AppNavbar from '../components/AppNavbar';
 import AddUserModal from '../components/AddUserModal';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 // --- ROLE BADGE ---
 function RoleBadge({ role }) {
@@ -43,7 +44,9 @@ function RoleBadge({ role }) {
 
 function Users({ toggleTheme, isDark }) {
   const { t } = usePreferences();
-  const apiBaseUrl = 'http://localhost:8081/api/users';
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = currentUser.role === 'ROLE_ADMIN';
+  const apiBaseUrl = '/api/users';
   const [users, setUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,8 +71,8 @@ function Users({ toggleTheme, isDark }) {
   const fetchUsers = async () => {
     setIsLoading(true);
     setError('');
-    const res = await fetch(apiBaseUrl);
-    if (!res.ok) {
+    const res = await apiFetch(apiBaseUrl);
+    if (!res || !res.ok) {
       throw new Error(t('users.loading'));
     }
     const data = await res.json();
@@ -107,8 +110,8 @@ function Users({ toggleTheme, isDark }) {
       return;
     }
     setError('');
-    const res = await fetch(`${apiBaseUrl}/${userId}`, { method: 'DELETE' });
-    if (!res.ok) {
+    const res = await apiFetch(`${apiBaseUrl}/${userId}`, { method: 'DELETE' });
+    if (!res || !res.ok) {
       setError(t('users.deleteError'));
       return;
     }
@@ -127,9 +130,8 @@ function Users({ toggleTheme, isDark }) {
     const url = isEdit ? `${apiBaseUrl}/${userData.id}` : apiBaseUrl;
     const method = isEdit ? 'PUT' : 'POST';
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -228,20 +230,22 @@ function Users({ toggleTheme, isDark }) {
                         </td>
                         <td>
                           <div className="flex items-center justify-end gap-2">
-                            <button 
+                            <button
                               onClick={() => handleOpenEdit(user)}
                               className="action-button edit"
-                                title={t('common.edit')}
+                              title={t('common.edit')}
                             >
                               <Edit2 size={16} />
                             </button>
-                            <button 
-                              onClick={() => handleDeleteUser(user.id)}
-                              className="action-button delete"
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="action-button delete"
                                 title={t('common.delete')}
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

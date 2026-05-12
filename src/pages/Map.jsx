@@ -1,6 +1,6 @@
 import 'leaflet/dist/leaflet.css';
 import '../utils/leaflet-heat-init.js';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -8,6 +8,7 @@ import HeatmapLayer from '../components/maps/HeatmapLayer.jsx';
 import UserLocationMarker from '../components/maps/UserLocationMarker.jsx';
 import AppNavbar from '../components/AppNavbar.jsx';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 // Fix Leaflet icons issue when using bundlers like Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -38,12 +39,6 @@ const greenIcon = createColoredIcon('#22c87a');
 const TUNISIA_CENTER = [34.0, 9.0];
 const DEFAULT_ZOOM = 5;
 
-// Mock families data specifically matching the 3 points in the screenshot
-const families = [
-  { _id: '1', name: 'Famille Ben Salah', location: 'Sousse, Khzema', status: 'OK', coordinates: { lat: 35.8245, lng: 10.6369 } },
-  { _id: '2', name: 'Famille Ayadi', location: 'Sfax, Menzel Chaker', status: 'URGENT', coordinates: { lat: 34.7406, lng: 10.7603 } },
-  { _id: '3', name: 'Famille Belghith', location: 'Tunis, Mrezga', status: 'URGENT', coordinates: { lat: 36.8065, lng: 10.1815 } }
-];
 
 function StatusBadge({ status, t }) {
   const isUrgent = status === 'URGENT';
@@ -61,6 +56,31 @@ function StatusBadge({ status, t }) {
 function Map({ toggleTheme, isDark }) {
   const { t } = usePreferences();
   const [showHeatmap, setShowHeatmap] = useState(true);
+  const [families, setFamilies] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch('/api/families')
+      .then((res) => {
+        if (!res || !res.ok) return;
+        return res.json();
+      })
+      .then((data) => {
+        if (!isMounted || !data) return;
+        const mapped = data
+          .filter((f) => f.latitude != null && f.longitude != null)
+          .map((f) => ({
+            _id: String(f.id),
+            name: f.headName,
+            location: f.address,
+            status: f.urgencyIndex >= 7 ? 'URGENT' : 'OK',
+            coordinates: { lat: f.latitude, lng: f.longitude },
+          }));
+        setFamilies(mapped);
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
 
   const count = families.length;
   const familiesLabel = t('map.familiesGeo', { count });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 function toDatetimeLocal(d) {
   const pad = (n) => String(n).padStart(2, '0');
@@ -38,7 +39,7 @@ function AddVisitModal({ isOpen, onClose, selectedFamily, onSuccess }) {
     );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (types.length === 0) {
       alert(t('modal.visit.selectType'));
@@ -48,23 +49,38 @@ function AddVisitModal({ isOpen, onClose, selectedFamily, onSuccess }) {
       alert(t('modal.visit.specifyOther'));
       return;
     }
+
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    if (!user?.id) {
+      alert('Utilisateur non authentifié');
+      return;
+    }
+
     setSubmitting(true);
-    // Simulation simple sans backend
-    setTimeout(() => {
-      const finalTypes = types.map(t => t === 'Autre' ? `Autre: ${customAutre}` : t);
-      const newVisit = {
-        _id: 'v_' + Date.now(),
-        date: new Date(dateTime).toISOString(),
-        status: status,
-        volunteer: { name: 'Nouveau bénévole' },
-        types: finalTypes,
-        proofPhoto: null,
-        notes: 'Visite enregistrée via le formulaire',
-        checkInLocation: status === 'COMPLETED'
-      };
-      setSubmitting(false);
+    try {
+      const res = await apiFetch('/api/visits', {
+        method: 'POST',
+        body: JSON.stringify({
+          familyId: selectedFamily._id,
+          volunteerId: user.id,
+          visitDate: dateTime,
+          status: status,
+        }),
+      });
+
+      if (!res || !res.ok) {
+        const err = res ? await res.text() : 'Erreur réseau';
+        throw new Error(err);
+      }
+
+      const newVisit = await res.json();
       onSuccess?.(newVisit);
-    }, 800);
+    } catch (err) {
+      alert(err.message || 'Erreur lors de la création de la visite');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const statusOptions = [

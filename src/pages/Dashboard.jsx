@@ -3,6 +3,7 @@ import { Users, AlertTriangle, CheckCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import AppNavbar from '../components/AppNavbar';
 import { usePreferences } from '../context/PreferencesContext';
+import { apiFetch } from '../utils/api';
 
 // --- ANIMATED COUNTER COMPONENT ---
 function CountUpValue({ targetValue }) {
@@ -143,8 +144,9 @@ function Dashboard({ toggleTheme, isDark }) {
     setIsLoading(true);
     setError('');
 
-    fetch('http://localhost:8081/api/dashboard/summary')
+    apiFetch('/api/dashboard/summary')
       .then((res) => {
+        if (!res) return;
         if (!res.ok) {
           throw new Error(t('dashboard.loadError'));
         }
