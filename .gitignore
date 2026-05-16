@@ -29,6 +29,9 @@ lerna-debug.log*
 # 6. Claude Code internal memory (not project code)
 .claude/
 
+# 7. Uploaded files (generated at runtime)
+backend/uploads/
+
 # 5. Fichiers systèmes ou générés par les éditeurs de code (VSCode, Mac, etc.)
 .vscode/*
 !.vscode/extensions.json

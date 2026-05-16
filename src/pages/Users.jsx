@@ -59,11 +59,13 @@ function Users({ toggleTheme, isDark }) {
     name: user.fullName,
     email: user.email,
     role: user.role,
+    phone: user.phone || '',
   });
 
   const buildRequest = (userData) => ({
     fullName: userData.name?.trim() || '',
     email: userData.email?.trim() || '',
+    phone: userData.phone?.trim() || undefined,
     role: userData.role || 'AGENT',
     password: userData.password || undefined,
   });
@@ -144,13 +146,23 @@ function Users({ toggleTheme, isDark }) {
     fetchUsers().catch((err) => setError(err.message));
   };
 
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'ADMIN': return t('roles.admin');
+      case 'COORDINATOR': return t('roles.coordinator');
+      case 'AGENT': return t('roles.agent');
+      default: return role;
+    }
+  };
+
   const filteredUsers = users.filter((u) => {
     if (currentUser.role === 'ROLE_COORDINATOR' && u.role === 'ADMIN') return false;
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
     const name = (u.name || '').toLowerCase();
     const email = (u.email || '').toLowerCase();
-    return name.includes(q) || email.includes(q);
+    const roleLabel = getRoleLabel(u.role).toLowerCase();
+    return name.includes(q) || email.includes(q) || roleLabel.includes(q);
   });
 
   return (

@@ -165,7 +165,9 @@ function Inventory({ toggleTheme, isDark }) {
     if (!q) return true;
     const name = (i.name || '').toLowerCase();
     const category = (i.category || '').toLowerCase();
-    return name.includes(q) || category.includes(q);
+    const isLow = i.quantity < i.minThreshold;
+    const statusLabel = (isLow ? t('status.low') : t('status.good')).toLowerCase();
+    return name.includes(q) || category.includes(q) || statusLabel.includes(q);
   });
 
   return (

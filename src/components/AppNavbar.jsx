@@ -7,6 +7,12 @@ function AppNavbar({ activeRoute = 'dashboard', toggleTheme, isDark }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { t } = usePreferences();
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsMobileMenuOpen(false);
+  };
+
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const role = currentUser.role;
 
@@ -50,7 +56,7 @@ function AppNavbar({ activeRoute = 'dashboard', toggleTheme, isDark }) {
           </div>
 
           <div className="navbar-right">
-            <Link to="/" className="btn btn-sm btn-outline gap-2 hidden sm:flex">
+            <Link to="/" className="btn btn-sm btn-outline gap-2 hidden sm:flex" onClick={handleLogout}>
               <LogOut size={14} />
               {t('nav.logout')}
             </Link>
@@ -101,10 +107,10 @@ function AppNavbar({ activeRoute = 'dashboard', toggleTheme, isDark }) {
             })}
             
             <div className="mt-auto pt-6 border-t border-slate-200/20 dark:border-slate-700/50">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-red-500 hover:bg-red-500/10 transition-colors font-medium"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={handleLogout}
               >
                 <LogOut size={20} />
                 {t('nav.logout')}

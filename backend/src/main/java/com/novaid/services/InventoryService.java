@@ -17,9 +17,13 @@ import java.util.stream.Collectors;
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
+    private final SmsService smsService;
+    private final WhatsAppService whatsAppService;
 
-    public InventoryService(InventoryRepository inventoryRepository) {
+    public InventoryService(InventoryRepository inventoryRepository, SmsService smsService, WhatsAppService whatsAppService) {
         this.inventoryRepository = inventoryRepository;
+        this.smsService = smsService;
+        this.whatsAppService = whatsAppService;
     }
 
     @Transactional(readOnly = true)
@@ -70,8 +74,16 @@ public class InventoryService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                 "Insufficient stock: available=" + item.getQuantity() + ", requested=" + quantity);
         }
+        boolean wasOk = item.getQuantity() > item.getMinThreshold();
         item.setQuantity(item.getQuantity() - quantity);
-        return toResponse(inventoryRepository.save(item));
+        Item saved = inventoryRepository.save(item);
+        if (wasOk && saved.getQuantity() <= saved.getMinThreshold()) {
+            String msg = "NOVAID ALERTE: Stock faible - " + saved.getName() +
+                " (qte: " + saved.getQuantity() + ", seuil: " + saved.getMinThreshold() + "). Reapprovisionner svp.";
+            smsService.sendToAllUsers(msg);
+            whatsAppService.sendToAllUsers(msg);
+        }
+        return toResponse(saved);
     }
 
     private Item findItem(Long id) {

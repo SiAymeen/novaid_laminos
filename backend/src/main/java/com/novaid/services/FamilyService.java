@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 public class FamilyService {
 
     private final FamilyRepository familyRepository;
+    private final SmsService smsService;
+    private final WhatsAppService whatsAppService;
 
     @Value("${novaid.app.centerLat}")
     private double centerLat;
@@ -29,8 +31,10 @@ public class FamilyService {
     @Value("${novaid.app.centerLng}")
     private double centerLng;
 
-    public FamilyService(FamilyRepository familyRepository) {
+    public FamilyService(FamilyRepository familyRepository, SmsService smsService, WhatsAppService whatsAppService) {
         this.familyRepository = familyRepository;
+        this.smsService = smsService;
+        this.whatsAppService = whatsAppService;
     }
 
     @Transactional(readOnly = true)
@@ -49,13 +53,26 @@ public class FamilyService {
         Family family = new Family();
         applyRequest(family, request);
         family.setActive(true);
-        return toResponse(familyRepository.save(family));
+        Family saved = familyRepository.save(family);
+        if (saved.getUrgencyIndex() >= 7) {
+            String msg = "NOVAID ALERTE: Nouvelle famille URGENTE ajoutee - " + saved.getHeadName() + ". Intervention requise.";
+            smsService.sendToAllUsers(msg);
+            whatsAppService.sendToAllUsers(msg);
+        }
+        return toResponse(saved);
     }
 
     public FamilyResponse update(Long id, FamilyRequest request) {
         Family family = findActiveFamily(id);
+        boolean wasUrgent = family.getUrgencyIndex() >= 7;
         applyRequest(family, request);
-        return toResponse(familyRepository.save(family));
+        Family saved = familyRepository.save(family);
+        if (!wasUrgent && saved.getUrgencyIndex() >= 7) {
+            String msg = "NOVAID ALERTE: Famille " + saved.getHeadName() + " est maintenant URGENTE. Intervention requise.";
+            smsService.sendToAllUsers(msg);
+            whatsAppService.sendToAllUsers(msg);
+        }
+        return toResponse(saved);
     }
 
     public void delete(Long id) {

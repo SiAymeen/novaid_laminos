@@ -11,6 +11,7 @@ function AddUserModal({ isOpen, onClose, onSave, initialData }) {
   const { t } = usePreferences();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('AGENT');
   const [error, setError] = useState('');
@@ -22,11 +23,13 @@ function AddUserModal({ isOpen, onClose, onSave, initialData }) {
     if (initialData) {
       setName(initialData.name || '');
       setEmail(initialData.email || '');
-      setPassword(''); // Never pre-fill password
+      setPhone(initialData.phone || '');
+      setPassword('');
       setRole(initialData.role || 'AGENT');
     } else {
       setName('');
       setEmail('');
+      setPhone('');
       setPassword('');
       setRole('AGENT');
     }
@@ -45,9 +48,9 @@ function AddUserModal({ isOpen, onClose, onSave, initialData }) {
       id: isEdit ? (initialData.id ?? initialData._id) : undefined,
       name: name.trim(),
       email: email.trim(),
+      phone: phone.trim() || undefined,
       role,
       password: password.trim() || undefined,
-      // In real app, password would be handled securely
     };
     
     onSave?.(payload);
@@ -101,6 +104,17 @@ function AddUserModal({ isOpen, onClose, onSave, initialData }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="w-full min-h-[44px] px-3 py-3 border border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="user-phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('modal.user.phone')}</label>
+              <input
+                id="user-phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+21698000000"
                 className="w-full min-h-[44px] px-3 py-3 border border-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>

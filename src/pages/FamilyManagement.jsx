@@ -142,7 +142,9 @@ function FamilyManagement({ toggleTheme, isDark }) {
     if (!q) return true;
     const name = (f.name || '').toLowerCase();
     const address = (f.address || '').toLowerCase();
-    return name.includes(q) || address.includes(q);
+    const statusLabel = (f.status === 'URGENT' ? t('status.urgent') : t('status.stable')).toLowerCase();
+    const needsText = (f.needs || []).join(' ').toLowerCase();
+    return name.includes(q) || address.includes(q) || statusLabel.includes(q) || needsText.includes(q);
   });
 
   return (
